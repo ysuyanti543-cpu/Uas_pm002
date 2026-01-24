@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Subdistrict {
   final String id;
   final String name;
@@ -71,7 +73,7 @@ class PengajuanLayanan {
   final String nik;
   final String keterangan;
   final DateTime tanggal;
-  StatusPengajuan status;
+  final StatusPengajuan status;
 
   PengajuanLayanan({
     required this.id,
@@ -79,7 +81,7 @@ class PengajuanLayanan {
     required this.namaPemohon,
     required this.nik,
     required this.keterangan,
-    DateTime? tanggal,
-    this.status = StatusPengajuan.diajukan,
-  }) : tanggal = tanggal ?? DateTime.now();
+    required this.tanggal,
+    required this.status,
+  });
 }
