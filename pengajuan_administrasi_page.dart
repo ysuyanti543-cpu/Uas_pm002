@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models.dart';
 import '../services/mock_service.dart';
+import '../widgets/app_drawer.dart';
 
 class PengajuanAdministrasiPage extends StatefulWidget {
   final String judul;
@@ -49,6 +50,7 @@ class _PengajuanAdministrasiPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(title: Text(widget.judul)),
       body: Padding(
         padding: const EdgeInsets.all(16),

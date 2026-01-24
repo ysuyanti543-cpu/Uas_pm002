@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../services/mock_service.dart';
+import '../services/firebase_service.dart';
 import '../models.dart';
 import 'aspirasi_qr_page.dart';
+import '../widgets/app_drawer.dart';
 
-const String googleFormUrl = 'https://forms.gle/ycgo7r98YGfMUvQ76';
+const String googleFormUrl = 'https://forms.gle/nvJ8rd2jwhDAspSeA';
 
 class SubmitAspirasiPage extends StatefulWidget {
   static const routeName = '/submit-aspirasi';
@@ -34,7 +35,7 @@ class _SubmitAspirasiPageState extends State<SubmitAspirasiPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Kirim Aspirasi')),
-      drawer: null,
+      drawer: const AppDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -80,43 +81,103 @@ class _SubmitAspirasiPageState extends State<SubmitAspirasiPage> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    MockService.instance.addPengajuan(
-      _jenisCtrl.text.trim(),
-      _namaCtrl.text.trim(),
-      _nikCtrl.text.trim(),
-      _keteranganCtrl.text.trim(),
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
-    final all = MockService.instance.getPengajuan();
-    final created = all.isNotEmpty ? all.last : null;
-    if (created != null) {
-      // Open Google Form link directly
-      final uri = Uri.parse(googleFormUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
+    final pengajuan = PengajuanLayanan(
+      id: '',
+      jenisLayanan: _jenisCtrl.text.trim(),
+      namaPemohon: _namaCtrl.text.trim(),
+      nik: _nikCtrl.text.trim(),
+      keterangan: _keteranganCtrl.text.trim(),
+      tanggal: DateTime.now(),
+      status: StatusPengajuan.diajukan,
+    );
 
-      // show a SnackBar with action to view QR
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Aspirasi terkirim, Google Form dibuka'),
-          action: SnackBarAction(
-            label: 'Lihat QR',
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => AspirasiQrPage(pengajuan: created),
-              ));
-            },
+    try {
+      final id = await FirebaseService.instance.tambahPengajuan(pengajuan);
+      final created = PengajuanLayanan(
+        id: id,
+        jenisLayanan: pengajuan.jenisLayanan,
+        namaPemohon: pengajuan.namaPemohon,
+        nik: pengajuan.nik,
+        keterangan: pengajuan.keterangan,
+        tanggal: pengajuan.tanggal,
+        status: pengajuan.status,
+      );
+
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      // Show success dialog with clear next steps
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          title: const Text('Aspirasi Berhasil Dibuat!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Jenis Aspirasi: ${created.jenisLayanan}'),
+              Text('Nama Pemohon: ${created.namaPemohon}'),
+              Text('Status: ${_statusText(created.status)}'),
+              const SizedBox(height: 16),
+              const Text(
+                'Langkah selanjutnya:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const Text('1. Petugas akan memproses pengajuan Anda'),
+              const Text('2. Setelah disetujui, Anda akan menerima QR code'),
+              const Text('3. Scan QR untuk mengisi Google Form lengkap'),
+              const Text('4. Laporan PDF dapat diakses di halaman persetujuan'),
+            ],
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                // Navigate to persetujuan petugas page to see status
+                Navigator.of(context).pushReplacementNamed('/persetujuan-petugas');
+                // Clear the form
+                _clearForm();
+              },
+              child: const Text('Lihat Status Pengajuan'),
+            ),
+          ],
         ),
       );
-      // optionally clear the form for next input
-      _jenisCtrl.clear();
-      _namaCtrl.clear();
-      _nikCtrl.clear();
-      _keteranganCtrl.clear();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal membuat aspirasi')));
+    } catch (e) {
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membuat aspirasi: ${e.toString()}')),
+      );
+    }
+  }
+
+  void _clearForm() {
+    _jenisCtrl.clear();
+    _namaCtrl.clear();
+    _nikCtrl.clear();
+    _keteranganCtrl.clear();
+  }
+
+  String _statusText(StatusPengajuan s) {
+    switch (s) {
+      case StatusPengajuan.diajukan:
+        return 'Diajukan';
+      case StatusPengajuan.diproses:
+        return 'Diproses';
+      case StatusPengajuan.ditolak:
+        return 'Ditolak';
+      case StatusPengajuan.selesai:
+        return 'Selesai';
     }
   }
 }

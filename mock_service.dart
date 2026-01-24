@@ -70,9 +70,9 @@ class MockService {
     // SAMPLE PENGAJUAN LAYANAN (only add if no saved data)
     if (_pengajuans.isEmpty) {
       _pengajuans.addAll([
-        PengajuanLayanan(id: 'p1', jenisLayanan: 'KTP', namaPemohon: 'Agus', nik: '123456789', keterangan: 'Pengajuan KTP baru', tanggal: DateTime.now().subtract(const Duration(days: 1))),
-        PengajuanLayanan(id: 'p2', jenisLayanan: 'KK', namaPemohon: 'Siti', nik: '987654321', keterangan: 'Pengajuan KK', tanggal: DateTime.now().subtract(const Duration(days: 2))),
-        PengajuanLayanan(id: 'p3', jenisLayanan: 'Surat Domisili', namaPemohon: 'Rudi', nik: '456789123', keterangan: 'Surat domisili untuk keperluan bank', tanggal: DateTime.now().subtract(const Duration(days: 3))),
+        PengajuanLayanan(id: 'p1', jenisLayanan: 'KTP', namaPemohon: 'Agus', nik: '123456789', keterangan: 'Pengajuan KTP baru', tanggal: DateTime.now().subtract(const Duration(days: 1)), status: StatusPengajuan.diajukan),
+        PengajuanLayanan(id: 'p2', jenisLayanan: 'KK', namaPemohon: 'Siti', nik: '987654321', keterangan: 'Pengajuan KK', tanggal: DateTime.now().subtract(const Duration(days: 2)), status: StatusPengajuan.diajukan),
+        PengajuanLayanan(id: 'p3', jenisLayanan: 'Surat Domisili', namaPemohon: 'Rudi', nik: '456789123', keterangan: 'Surat domisili untuk keperluan bank', tanggal: DateTime.now().subtract(const Duration(days: 3)), status: StatusPengajuan.diajukan),
       ]);
     }
   }
@@ -92,6 +92,8 @@ class MockService {
       namaPemohon: namaPemohon,
       nik: nik,
       keterangan: keterangan,
+      tanggal: DateTime.now(),
+      status: StatusPengajuan.diajukan,
     );
     _pengajuans.add(peng);
     _savePengajuans(); // Save after adding
@@ -151,7 +153,16 @@ class MockService {
   void updateStatus(String id, StatusPengajuan status) {
     final index = _pengajuans.indexWhere((p) => p.id == id);
     if (index != -1) {
-      _pengajuans[index].status = status;
+      final updated = PengajuanLayanan(
+        id: _pengajuans[index].id,
+        jenisLayanan: _pengajuans[index].jenisLayanan,
+        namaPemohon: _pengajuans[index].namaPemohon,
+        nik: _pengajuans[index].nik,
+        keterangan: _pengajuans[index].keterangan,
+        tanggal: _pengajuans[index].tanggal,
+        status: status,
+      );
+      _pengajuans[index] = updated;
     }
   }
 
@@ -187,5 +198,41 @@ class MockService {
       'status': p.status.toString().split('.').last,
     }).toList();
     await prefs.setString('pengajuans', json.encode(pengajuansJson));
+  }
+
+  /// ================= EXPORT / IMPORT PENGAJUAN =================
+  String exportPengajuansJson() {
+    final List<Map<String, dynamic>> pengajuansJson = _pengajuans.map((p) => {
+      'id': p.id,
+      'jenisLayanan': p.jenisLayanan,
+      'namaPemohon': p.namaPemohon,
+      'nik': p.nik,
+      'keterangan': p.keterangan,
+      'tanggal': p.tanggal.toIso8601String(),
+      'status': p.status.toString().split('.').last,
+    }).toList();
+    return json.encode(pengajuansJson);
+  }
+
+  bool importPengajuansFromJson(String jsonString) {
+    try {
+      final List<dynamic> decoded = json.decode(jsonString);
+      for (var item in decoded) {
+        final peng = PengajuanLayanan(
+          id: item['id'],
+          jenisLayanan: item['jenisLayanan'],
+          namaPemohon: item['namaPemohon'],
+          nik: item['nik'],
+          keterangan: item['keterangan'],
+          tanggal: DateTime.parse(item['tanggal']),
+          status: StatusPengajuan.values.firstWhere((e) => e.toString().split('.').last == item['status']),
+        );
+        _pengajuans.add(peng);
+      }
+      _savePengajuans(); // Save after importing
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }

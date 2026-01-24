@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../services/mock_service.dart';
+import '../pages/aspirasi_qr_scanner_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -12,6 +14,7 @@ class AppDrawer extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            // ================= HEADER =================
             DrawerHeader(
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
@@ -35,8 +38,8 @@ class AppDrawer extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
+                      children: const [
+                        Text(
                           'DEWAN PERWAKILAN RAKYAT',
                           style: TextStyle(
                             color: Colors.white,
@@ -44,11 +47,11 @@ class AppDrawer extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'Aspirasi & Pengaduan Rakyat',
                           style: TextStyle(
-                            color: Colors.white.withAlpha((0.9 * 255).round()),
+                            color: Colors.white70,
                             fontSize: 12,
                           ),
                         ),
@@ -59,88 +62,52 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
-            ListTile(
-              leading: const Icon(Icons.login),
-              title: const Text('Login'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/login'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard Warga'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/resident'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.store),
-              title: const Text('Data Petugas / UMKM'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/seller'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.group),
-              title: const Text('Manajemen Petugas'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/manage-user'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.assignment),
-              title: const Text('Layanan'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/layanan'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.article),
-              title: const Text('Administrasi'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/administrasi'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.how_to_reg),
-              title: const Text('Administrasi Kependudukan'),
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/administrasi-kependudukan'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.admin_panel_settings),
-              title: const Text('Admin Panel'),
-              onTap: () => Navigator.pushReplacementNamed(context, '/admin'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Persetujuan Layanan'),
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/persetujuan-petugas'),
-            ),
+            // ================= MENU =================
+            _item(context, Icons.login, 'Login', '/login'),
+            _item(context, Icons.dashboard, 'Dashboard Warga', '/resident'),
+            _item(context, Icons.store, 'Data Petugas / UMKM', '/seller'),
+            _item(context, Icons.group, 'Manajemen Petugas', '/manage-user'),
+            _item(context, Icons.assignment, 'Layanan', '/layanan'),
+            _item(context, Icons.article, 'Administrasi', '/administrasi'),
+            _item(context, Icons.how_to_reg, 'Administrasi Kependudukan', '/administrasi-kependudukan'),
+            _item(context, Icons.admin_panel_settings, 'Admin Panel', '/admin'),
+            _item(context, Icons.check_circle_outline, 'Persetujuan Layanan', '/persetujuan-petugas'),
+
             ListTile(
               leading: const Icon(Icons.qr_code_scanner),
-              title: const Text('Scan QR Aspirasi'),
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/aspirasi-qr-scan'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Submit Aspirasi'),
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/submit-aspirasi'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.picture_as_pdf),
-              title: const Text('Laporan Aspirasi (PDF)'),
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, '/laporan-aspirasi'),
+              title: const Text('Pindai QR Aspirasi'),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AspirasiQrScannerPage()),
+                );
+              },
             ),
 
-            const Divider(),
+            _item(context, Icons.picture_as_pdf, 'Laporan Aspirasi (PDF)', '/laporan-aspirasi'),
+
+          
 
             ListTile(
               leading: const Icon(Icons.arrow_back),
               title: const Text('Kembali'),
               onTap: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                } else {
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
+                Navigator.pop(context);
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // ================= HELPER =================
+  Widget _item(BuildContext context, IconData icon, String title, String route) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      onTap: () {
+        Navigator.pushReplacementNamed(context, route);
+      },
     );
   }
 }
